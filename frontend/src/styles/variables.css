@@ -1,0 +1,29 @@
+:root {
+  /* Light theme colors */
+  --bg: 255 255 255; /* use as rgb in color() helpers */
+  --card: 250 250 250;
+  --text: 22 24 25;
+  --muted: 99 102 105;
+  --primary: 34 197 94; /* green-500 */
+  --accent: 59 130 246; /* blue-500 */
+  --radius: 12px;
+  --shadow: 0 4px 18px rgba(16,24,40,0.06);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: 17 24 39;
+    --card: 20 24 28;
+    --text: 226 232 240;
+    --muted: 148 163 184;
+    --primary: 34 197 94;
+    --accent: 96 165 250;
+    --shadow: 0 8px 30px rgba(0,0,0,0.6);
+  }
+}
+
+/* Helper tokens (not colors directly) */
+:root {
+  --max-width: 420px;
+  --gap: 12px;
+}
