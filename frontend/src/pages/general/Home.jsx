@@ -21,7 +21,11 @@ const Home = () => {
                 },
              });
             const items = res?.data?.foodItems ?? [];
-            setVideos(Array.isArray(items) ? items : []);
+            setVideos(items.map(item => ({
+  ...item,
+  liked: item.likedByUser // sync liked state from backend
+})));
+
         } catch (err) {
             console.error(err);
             navigate('/')
@@ -36,10 +40,56 @@ const Home = () => {
 
 
     const handleLike = async (foodId) => {
-        console.log(`Liking food item with ID: ${foodId}`);
-        await axios.post(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/food/like`, { foodId }, { withCredentials: true });
-        fetchFoodReels();
-    };
+  // Optimistically update UI (toggle like/unlike)
+  setVideos(prev =>
+    prev.map(v =>
+      v._id === foodId
+        ? {
+            ...v,
+            liked: !v.liked, // toggle like state
+            likeCount: v.liked
+              ? Math.max((v.likeCount || 1) - 1, 0) // unlike → decrease (no negatives)
+              : (v.likeCount || 0) + 1,             // like → increase
+            liking: true, // lock button while processing
+          }
+        : v
+    )
+  );
+
+  try {
+    await axios.post(
+      `${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/food/like`,
+      { foodId },
+      { withCredentials: true }
+    );
+
+    // Unlock after backend confirms
+    setVideos(prev =>
+      prev.map(v =>
+        v._id === foodId ? { ...v, liking: false } : v
+      )
+    );
+  } catch (err) {
+    console.error(err);
+
+    // Rollback UI if backend fails
+    setVideos(prev =>
+      prev.map(v =>
+        v._id === foodId
+          ? {
+              ...v,
+              liked: !v.liked, // revert toggle
+              likeCount: v.liked
+                ? (v.likeCount || 0) + 1
+                : Math.max((v.likeCount || 1) - 1, 0),
+              liking: false,
+            }
+          : v
+      )
+    );
+  }
+};
+
 
     const handleSave = async (foodId) => {
         console.log(`Saving food item with ID: ${foodId}`);
