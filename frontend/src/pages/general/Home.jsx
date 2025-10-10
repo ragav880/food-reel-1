@@ -11,8 +11,15 @@ const Home = () => {
     const navigate = useNavigate();
 
     const fetchFoodReels = async () => {
+        console.log('Fetching food reels...');
         try {
-            const res = await axios.get(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/food/`, { withCredentials: true });
+            const res = await axios.get(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/food/`, { withCredentials: true,
+            headers: {
+                    'Cache-Control': 'no-cache',
+                    'Pragma': 'no-cache',
+                    'Expires': '0',
+                },
+             });
             const items = res?.data?.foodItems ?? [];
             setVideos(Array.isArray(items) ? items : []);
         } catch (err) {
@@ -24,6 +31,9 @@ const Home = () => {
     useEffect(() => {
         fetchFoodReels();
     }, []);
+    
+    
+
 
     const handleLike = async (foodId) => {
         console.log(`Liking food item with ID: ${foodId}`);
@@ -36,6 +46,7 @@ const Home = () => {
         await axios.post(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/food/save`, { foodId }, { withCredentials: true });
         fetchFoodReels();
     };
+    
 
     // ## NEW LOGOUT FUNCTION ##
     const handleLogout = async () => {
