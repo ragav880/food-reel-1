@@ -1,8 +1,11 @@
-/* Reels: full-screen vertical scrolling with snap */
+/* =============== ROOT VARIABLES =============== */
 :root {
   --overlay-pad: 18px;
+  --like-color: #ff3b30;
+  --save-color: #ffd700;
 }
 
+/* =============== BASE STYLES =============== */
 .reels-root {
   height: 100vh;
   overflow: hidden;
@@ -13,8 +16,19 @@
   height: 100vh;
   overflow-y: auto;
   scroll-snap-type: y mandatory;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.1) transparent;
 }
 
+.reels-list::-webkit-scrollbar {
+  width: 6px;
+}
+.reels-list::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.08);
+  border-radius: 999px;
+}
+
+/* =============== REEL ITEM =============== */
 .reel-item {
   position: relative;
   height: 100vh;
@@ -41,29 +55,25 @@
   object-fit: cover;
 }
 
-/* Desktop: show portrait card centered (like Shorts) */
+/* Desktop: Center reel in portrait style (like Instagram desktop) */
 @media (min-width: 1000px) {
   .reel-card {
-    width: 360px;
-    height: calc(100vh - 80px);
+    width: 380px;
+    height: 90vh;
     border-radius: 16px;
     overflow: hidden;
-    box-shadow: 0 12px 40px rgba(2,6,23,0.6);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.8);
   }
+
   .reel-item {
     display: flex;
-    align-items: center;
     justify-content: center;
-    background: radial-gradient(ellipse at center, rgba(0,0,0,0.7), #000 60%);
+    align-items: center;
+    background: radial-gradient(ellipse at center, rgba(0,0,0,0.75), #000 70%);
   }
-  .reel-overlay {
-    left: 18px;
-    right: 18px;
-    bottom: 22px;
-  }
-  .reel-desc { max-width: 320px }
 }
 
+/* =============== OVERLAYS =============== */
 .reel-overlay {
   position: absolute;
   left: var(--overlay-pad);
@@ -73,11 +83,8 @@
   flex-direction: column-reverse;
   align-items: flex-start;
   gap: 10px;
-  pointer-events: none; /* so clicks go to video unless on button */
-   z-index: 10;
-}
-.-btn{
-  color: None;
+  pointer-events: none;
+  z-index: 10;
 }
 
 .reel-desc {
@@ -86,7 +93,6 @@
   font-size: 15px;
   line-height: 1.2;
   pointer-events: auto;
-  /* clamp to 2 lines */
   display: -webkit-box;
   -webkit-line-clamp: 2;
   line-clamp: 2;
@@ -98,119 +104,106 @@
 .reel-btn {
   pointer-events: auto;
   display: inline-block;
-  background: linear-gradient(90deg,#22c55e,#60a5fa);
+  background: linear-gradient(90deg, #22c55e, #60a5fa);
   color: white;
   padding: 10px 14px;
   border-radius: 10px;
   text-decoration: none;
   font-weight: 700;
+  border: none;
 }
 
-/* ensure overlays appear above video */
-.reel-overlay, .reel-desc, .reel-btn { z-index: 2 }
-
-/* Optional: hide scroll bar for cleaner look */
-.reels-list::-webkit-scrollbar { width: 6px }
-.reels-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 999px }
-
-
-
-/* --- Add these styles to your reels.css file --- */
-
-/* Ensure the card is a positioning container for overlays and actions */
-.reel-card {
-    position: relative;
-    /* other styles like width, height, background... */
-}
-
-/* Container for side action buttons (Like, Save) */
+/* =============== LIKE / SAVE BUTTONS =============== */
 .reel-actions {
-    position: absolute;
-    bottom: 90px; /* Adjust vertical position as needed */
-    right: 10px;
-    z-index: 10;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    color: white;
+  position: absolute;
+  bottom: 90px;
+  right: 16px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
 }
 
-/* Individual action item (button + count) */
 .action-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 5px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  color: white;
 }
 
-/* Style for the action buttons */
 .action-btn {
-    background: none;
-    border: none;
-    color: white;
-    cursor: pointer;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: transform 0.2s ease;
+  background: rgba(255,255,255,0.1);
+  border: none;
+  border-radius: 50%;
+  padding: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s ease;
 }
 
+/* Hover & Active Feedback */
+.action-btn:hover {
+  background: rgba(255,255,255,0.25);
+}
 .action-btn:active {
-    transform: scale(0.9);
+  transform: scale(0.9);
 }
 
-/* Style for the like/save count text */
+/* Like/Save Active States (FILL COLORS) */
+.action-btn.liked {
+  background: var(--like-color);
+}
+.action-btn.saved {
+  background: var(--save-color);
+}
+
+/* Count */
 .action-count {
-    font-size: 0.9rem;
-    font-weight: 500;
+  font-size: 0.9rem;
+  font-weight: 500;
 }
 
-/* --- Bottom Navigation Bar --- */
+/* =============== BOTTOM NAV =============== */
 .bottom-nav {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 60px;
-    background-color: #000; /* Black background */
-    border-top: 1px solid #333; /* Subtle top border */
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    z-index: 100;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 60px;
+  background-color: #000;
+  border-top: 1px solid #222;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  z-index: 100;
 }
 
-/* Style for the navigation links (icons) */
 .nav-link {
-    color: white;
-    text-decoration: none;
-    transition: color 0.2s ease;
+  color: white;
+  text-decoration: none;
+  transition: color 0.2s ease;
 }
-
 .nav-link:hover {
-    color: #ccc; /* Lighter color on hover */
+  color: #ccc;
 }
 
-/* Add this new class to your reels.css file */
-
+/* Reusable icon button */
 .icon-btn {
   background: transparent;
   border: none;
   cursor: pointer;
-  padding: 8px; /* <-- This creates the clickable area around the icon! */
-  border-radius: 50%; /* Makes the hover effect a circle */
+  padding: 8px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: background-color 0.2s;
 }
 
-/* Optional but recommended: A subtle background on hover for better user feedback */
 .icon-btn:hover {
   background-color: rgba(255, 255, 255, 0.2);
 }
-
-/* This is the correct CSS rule that will be loaded after a hard refresh */
-
-

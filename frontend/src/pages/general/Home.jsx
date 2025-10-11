@@ -3,7 +3,14 @@ import '../../styles/reels.css';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 // FaSignOutAlt is imported for the new logout button
-import { FaRegHeart, FaRegBookmark, FaHome, FaBookmark, FaSignOutAlt } from "react-icons/fa";
+import {
+  FaRegHeart,
+  FaHeart,
+  FaRegBookmark,
+  FaBookmark,
+  FaHome,
+  FaSignOutAlt
+} from "react-icons/fa";
 import { toast } from 'sonner';
 
 const Home = () => {
@@ -23,7 +30,8 @@ const Home = () => {
             const items = res?.data?.foodItems ?? [];
             setVideos(items.map(item => ({
   ...item,
-  liked: item.likedByUser // sync liked state from backend
+  liked: item.likedByUser,
+  saved: item.savedByUser, // sync liked state from backend
 })));
 
         } catch (err) {
@@ -92,10 +100,55 @@ const Home = () => {
 
 
     const handleSave = async (foodId) => {
-        console.log(`Saving food item with ID: ${foodId}`);
-        await axios.post(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/food/save`, { foodId }, { withCredentials: true });
-        fetchFoodReels();
-    };
+  // Optimistic toggle in UI
+  setVideos(prev =>
+    prev.map(v =>
+      v._id === foodId
+        ? {
+            ...v,
+            saved: !v.saved, // toggle save/unsave
+            saveCount: v.saved
+              ? Math.max((v.saveCount || 1) - 1, 0) // unsave → decrease
+              : (v.saveCount || 0) + 1,             // save → increase
+            saving: true, // lock while processing
+          }
+        : v
+    )
+  );
+
+  try {
+    await axios.post(
+      `${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/food/save`,
+      { foodId },
+      { withCredentials: true }
+    );
+
+    // Unlock after backend confirms
+    setVideos(prev =>
+      prev.map(v =>
+        v._id === foodId ? { ...v, saving: false } : v
+      )
+    );
+  } catch (err) {
+    console.error(err);
+    // Rollback UI if backend fails
+    setVideos(prev =>
+      prev.map(v =>
+        v._id === foodId
+          ? {
+              ...v,
+              saved: !v.saved, // revert toggle
+              saveCount: v.saved
+                ? (v.saveCount || 0) + 1
+                : Math.max((v.saveCount || 1) - 1, 0),
+              saving: false,
+            }
+          : v
+      )
+    );
+  }
+};
+
     
 
     // ## NEW LOGOUT FUNCTION ##
@@ -147,19 +200,67 @@ const Home = () => {
                             </div>
 
                             <div className="reel-actions">
-                                <div className="action-item">
-                                    <button className="action-btn" onClick={() => handleLike(item._id)}>
-                                        <FaRegHeart size={28} />
-                                    </button>
-                                    <span className="action-count">{item.likeCount || 0}</span>
-                                </div>
-                                <div className="action-item">
-                                    <button className="action-btn" onClick={() => handleSave(item._id)}>
-                                        <FaRegBookmark size={28} />
-                                    </button>
-                                    <span className="action-count">{item.saveCount}</span>
-                                </div>
-                            </div>
+  {/* LIKE BUTTON */}
+  <div className="action-item">
+    <button
+      className="action-btn"
+      onClick={() => handleLike(item._id)}
+      disabled={item.liking}
+    >
+      {item.liked ? (
+        <FaHeart
+          size={28}
+          color="red"
+          style={{
+            transition: 'transform 0.2s ease',
+            transform: item.liking ? 'scale(0.9)' : 'scale(1)',
+          }}
+        />
+      ) : (
+        <FaRegHeart
+          size={28}
+          color="white"
+          style={{
+            transition: 'transform 0.2s ease',
+            transform: item.liking ? 'scale(0.9)' : 'scale(1)',
+          }}
+        />
+      )}
+    </button>
+    <span className="action-count text-white">{item.likeCount || 0}</span>
+  </div>
+
+  {/* SAVE BUTTON */}
+  <div className="action-item">
+    <button
+      className="action-btn"
+      onClick={() => handleSave(item._id)}
+      disabled={item.saving}
+    >
+      {item.saved ? (
+        <FaBookmark
+          size={28}
+          color="white"
+          style={{
+            transition: 'transform 0.2s ease',
+            transform: item.saving ? 'scale(0.9)' : 'scale(1)',
+          }}
+        />
+      ) : (
+        <FaRegBookmark
+          size={28}
+          color="white"
+          style={{
+            transition: 'transform 0.2s ease',
+            transform: item.saving ? 'scale(0.9)' : 'scale(1)',
+          }}
+        />
+      )}
+    </button>
+    <span className="action-count text-white">{item.saveCount || 0}</span>
+  </div>
+</div>
+
                         </div>
                     </section>
                 ))}
